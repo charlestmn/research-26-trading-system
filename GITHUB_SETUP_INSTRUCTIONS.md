@@ -3,8 +3,21 @@
 ## Current Status
 ✅ Local git repository initialized and committed
 ❌ GitHub remote repository not yet created
+❌ GitHub MCP token lacks 'repo' scope permissions
 
-## Manual Steps to Create GitHub Repository
+## GitHub Token Issue
+The GitHub MCP server is working but the personal access token lacks the `repo` scope needed to create repositories. 
+
+**Error**: `403 Resource not accessible by personal access token`
+
+### Fix GitHub Token Permissions
+1. Go to https://github.com/settings/tokens
+2. Find your personal access token
+3. Edit the token and ensure it has the `repo` scope checked
+4. Save the token changes
+5. Restart the MCP server
+
+## Manual Steps to Create GitHub Repository (Alternative)
 
 ### Step 1: Create GitHub Repository
 1. Go to https://github.com/new
