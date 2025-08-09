@@ -1,0 +1,122 @@
+# Environment and secrets
+.env
+.env.local
+.env.production
+*.key
+*.pem
+config/secrets.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data files
+data/
+historical_data/
+*.csv
+*.parquet
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Model files
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pb
+*.model
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Backtest results
+backtest_results/
+backtest_data/
+optimization_results/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+nul
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archive of legacy V10 system
+archive_v10_legacy/
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Profiling
+.prof
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/

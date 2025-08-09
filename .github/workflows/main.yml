@@ -1,0 +1,210 @@
+name: Research 26 Trading System CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  AWS_REGION: us-east-1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black flake8 mypy
+        
+    - name: Code formatting check
+      run: |
+        black --check src/ tests/
+        
+    - name: Linting
+      run: |
+        flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+        
+    - name: Type checking
+      run: |
+        mypy src/ --ignore-missing-imports
+        
+    - name: Run unit tests
+      run: |
+        pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        
+    - name: Run integration tests
+      run: |
+        pytest tests/integration/ -v
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run security scan
+      uses: securecodewarrior/github-action-add-sarif@v1
+      with:
+        sarif-file: 'security-scan-results.sarif'
+        
+    - name: Check for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+
+  build:
+    needs: [test, security-scan]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Amazon ECR
+      if: github.ref == 'refs/heads/main'
+      uses: aws-actions/amazon-ecr-login@v2
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        
+    - name: Build Docker image
+      run: |
+        docker build -t research26-trading:${{ github.sha }} .
+        
+    - name: Push to ECR
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker tag research26-trading:${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/research26-trading:${{ github.sha }}
+        docker tag research26-trading:${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/research26-trading:latest
+        docker push ${{ secrets.ECR_REGISTRY }}/research26-trading:${{ github.sha }}
+        docker push ${{ secrets.ECR_REGISTRY }}/research26-trading:latest
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Deploy to staging
+      run: |
+        aws ecs update-service \
+          --cluster research26-staging \
+          --service trading-engine-staging \
+          --force-new-deployment
+          
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster research26-staging \
+          --services trading-engine-staging
+          
+    - name: Run smoke tests
+      run: |
+        python scripts/smoke_tests.py --environment staging
+
+  deploy-production:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Deploy to production
+      run: |
+        aws ecs update-service \
+          --cluster research26-production \
+          --service trading-engine-production \
+          --force-new-deployment
+          
+    - name: Wait for deployment
+      run: |
+        aws ecs wait services-stable \
+          --cluster research26-production \
+          --services trading-engine-production
+          
+    - name: Run health checks
+      run: |
+        python scripts/health_check.py --environment production
+        
+    - name: Notify deployment success
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: 'Research 26 production deployment successful! 🚀'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [deploy-production]
+    
+    steps:
+    - name: Rollback production deployment
+      run: |
+        aws ecs update-service \
+          --cluster research26-production \
+          --service trading-engine-production \
+          --task-definition research26-trading:previous
+          
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: 'Research 26 deployment failed - rolling back! ⚠️'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
