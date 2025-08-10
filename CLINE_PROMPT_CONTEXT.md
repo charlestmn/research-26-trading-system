@@ -9,8 +9,9 @@
 When user says "review prompt context in github":
 1. Read this file (`CLINE_PROMPT_CONTEXT.md`)
 2. Read current status from `R26_MASTER_DEVELOPMENT_LOG.md`
-3. Read technical overview and strategy from `RESEARCH_26_FINAL_STATUS_REPORT.md`
-4. Confirm context loaded: "✅ Context loaded from GitHub"
+3. Read technical overview and strategy from `RESEARCH_26_PROJECT_STATUS_REPORT.md`
+4. Read system architecture from `TECHNICAL_ARCHITECTURE.md`
+5. Confirm context loaded: "✅ Context loaded from GitHub"
 
 ### Step 2: Work Session
 - Follow all core working principles below
@@ -77,16 +78,17 @@ Every session MUST end with updating `R26_MASTER_DEVELOPMENT_LOG.md`:
 ### Repository Information
 - **GitHub Repo:** `charlestmn/research-26-trading-system`
 - **Master Log:** `R26_MASTER_DEVELOPMENT_LOG.md`
-- **Technical Overview:** `RESEARCH_26_FINAL_STATUS_REPORT.md`
+- **Technical Overview:** `RESEARCH_26_PROJECT_STATUS_REPORT.md`
+- **System Architecture:** `TECHNICAL_ARCHITECTURE.md`
 - **Strategy Status:** [Read from master log at session start]
 - **Current Phase:** [Read from master log at session start]
 
 ### Key Strategy Documents
 1. `R26_MASTER_DEVELOPMENT_LOG.md` - Main development tracking
-2. `RESEARCH_26_FINAL_STATUS_REPORT.md` - Technical overview and strategy
-3. `RESEARCH_26_COMPLETE_STATUS.md` - Detailed completion tracking
+2. `RESEARCH_26_PROJECT_STATUS_REPORT.md` - Technical overview and strategy
+3. `TECHNICAL_ARCHITECTURE.md` - System design and architecture
 4. `MISSION_STATEMENT.md` - Strategic objectives
-5. `TECHNICAL_ARCHITECTURE.md` - System design
+5. `RISK_POLICY.md` - Risk management framework
 
 ### AWS Infrastructure (Cloud-First)
 - **Instance:** t3.medium (2 vCPU, 4GB RAM) - IP: 54.198.134.93
@@ -142,5 +144,5 @@ Every session MUST end with updating `R26_MASTER_DEVELOPMENT_LOG.md`:
 *This template ensures consistent, clean, AWS cloud-first development with complete context continuity across all Cline sessions.*
 
 **Last Updated:** 2025-08-10  
-**Version:** 1.1  
+**Version:** 1.2  
 **Status:** Active Template
